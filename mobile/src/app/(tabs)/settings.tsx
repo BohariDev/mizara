@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Text,
   TouchableOpacity,
   View,
@@ -27,6 +28,8 @@ import {
   useUpdateUserSettings,
 } from "@/services/user/hooks";
 import { useSignOut } from "@/services/auth/hooks";
+import { usePushPermission } from "@/services/push-notification/hooks";
+import { registerPushToken } from "@/services/push-notification/register";
 import { SettingsSkeleton } from "@/components/Skeleton";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 
@@ -50,14 +53,50 @@ export default function Settings() {
   const { updateUserSettings, isPending: isUpdateSettingsPending } =
     useUpdateUserSettings();
   const { signOut, isPending: isSigningOut } = useSignOut();
+  const { isGranted: isPushPermissionGranted, refresh: refreshPushPermission } =
+    usePushPermission();
   const [pendingToggle, setPendingToggle] = useState<"push" | "email" | null>(
     null,
   );
 
   const isPending = isProfilePending || isSettingsPending;
 
-  const handlePushNotificationsToggle = (newValue: boolean) => {
+  // The account setting alone isn't enough: this device also needs the OS
+  // permission to actually receive pushes.
+  const isPushNotificationsOn =
+    !!userSettings?.push_notifications_enabled && isPushPermissionGranted;
+
+  const handlePushNotificationsToggle = async (newValue: boolean) => {
     setPendingToggle("push");
+
+    // Turning push on is the only place the permission prompt is shown.
+    if (newValue) {
+      let canReceivePush = false;
+
+      try {
+        canReceivePush = await registerPushToken({ requestPermission: true });
+      } catch {
+        showToast("Failed to update push notifications.", "error");
+        setPendingToggle(null);
+        return;
+      }
+
+      await refreshPushPermission();
+
+      if (!canReceivePush) {
+        setPendingToggle(null);
+        Alert.alert(
+          "Notifications are blocked",
+          "Allow notifications for Mizara in your phone settings to get push notifications.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings() },
+          ],
+        );
+        return;
+      }
+    }
+
     updateUserSettings(
       { push_notifications_enabled: newValue },
       {
@@ -438,9 +477,9 @@ export default function Settings() {
                   Push Notifications
                 </Text>
                 <ToggleSwitch
-                  value={userSettings?.push_notifications_enabled ?? false}
+                  value={isPushNotificationsOn}
                   onValueChange={handlePushNotificationsToggle}
-                  loading={isUpdateSettingsPending && pendingToggle === "push"}
+                  loading={pendingToggle === "push"}
                 />
               </View>
               <View

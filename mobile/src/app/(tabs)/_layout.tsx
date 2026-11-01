@@ -12,6 +12,7 @@ import { isThemeMode, useTheme } from "@/contexts/ThemeContext";
 import { useTypography } from "@/hooks/useTypography";
 import { useUserSettings } from "@/services/user/hooks";
 import { useUnreadNotificationCount } from "@/services/notification/hooks";
+import { usePushNotifications } from "@/services/push-notification/hooks";
 import { formatUnreadBadge } from "@/utils/notification";
 
 export default function TabsLayout() {
@@ -21,6 +22,8 @@ export default function TabsLayout() {
   const { unreadCount, refetch: refetchUnreadCount } =
     useUnreadNotificationCount();
   const insets = useSafeAreaInsets();
+
+  usePushNotifications();
 
   // Notifications are created in the background, so refresh the badge when
   // the app comes back to the foreground.

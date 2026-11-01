@@ -14,6 +14,7 @@ import {
   saveAccessToken,
   saveRefreshToken,
 } from "@/services/auth/token-storage";
+import { unregisterPushToken } from "@/services/push-notification/register";
 import { getErrorMessage } from "../get-error-message";
 
 export const useSignIn = () => {
@@ -80,6 +81,10 @@ export const useSignOut = () => {
     error,
   } = useMutation({
     mutationFn: async () => {
+      // Needs the session, so it runs before logout. A failure must not
+      // block signing out.
+      await unregisterPushToken().catch(() => {});
+
       const refreshToken = await getRefreshToken();
 
       if (refreshToken) {

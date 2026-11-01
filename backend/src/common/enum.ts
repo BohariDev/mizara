@@ -43,6 +43,11 @@ export enum ReminderChannel {
     Push = 'push',
 }
 
+export enum PushPlatform {
+    Android = 'android',
+    Ios = 'ios',
+}
+
 export enum SentReminderType {
     Due = 'due',
     Overdue = 'overdue',

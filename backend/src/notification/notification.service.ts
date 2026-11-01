@@ -5,14 +5,23 @@ import { Op, Transaction } from 'sequelize';
 import { NotificationModel } from '@/notification/models/notification.model';
 import { FindAllNotificationDto } from '@/notification/dto/find-all-notification.dto';
 import { CreateNotification } from '@/notification/types/create-notification.type';
+import { PushNotificationService } from '@/push-notification/push-notification.service';
+import { UserSettingsModel } from '@/user/models/user-settings.model';
+import { ReminderSettingsModel } from '@/reminder/models/reminder-settings.model';
+import { ReminderChannel } from '@/common/enum';
 
 @Injectable()
 export class NotificationService {
     private readonly logger = new Logger(NotificationService.name);
 
     constructor(
+        private readonly pushNotificationService: PushNotificationService,
         @InjectModel(NotificationModel)
         private notificationModel: typeof NotificationModel,
+        @InjectModel(UserSettingsModel)
+        private userSettingsModel: typeof UserSettingsModel,
+        @InjectModel(ReminderSettingsModel)
+        private reminderSettingsModel: typeof ReminderSettingsModel,
     ) {}
 
     // Called by other modules (reminder, recurring-payment) when an event
@@ -22,7 +31,7 @@ export class NotificationService {
             `Creating ${notification.type} notification for user: ${notification.user_id}`,
         );
 
-        return this.notificationModel.create(
+        const createdNotification = await this.notificationModel.create(
             {
                 user_id: notification.user_id,
                 recurring_payment_id: notification.recurring_payment_id ?? null,
@@ -32,6 +41,70 @@ export class NotificationService {
                 data: notification.data ?? null,
             },
             { transaction },
+        );
+
+        // Don't push a notification that a rollback could still undo.
+        if (transaction) {
+            transaction.afterCommit(() => this.sendPush(createdNotification));
+        } else {
+            await this.sendPush(createdNotification);
+        }
+
+        return createdNotification;
+    }
+
+    // A failed push shouldn't fail the notification it belongs to.
+    private async sendPush(notification: NotificationModel) {
+        try {
+            if (!(await this.isPushEnabled(notification))) {
+                return;
+            }
+
+            await this.pushNotificationService.sendToUser(
+                notification.user_id,
+                {
+                    title: notification.title,
+                    body: notification.body,
+                    data: {
+                        notification_id: notification.id,
+                        recurring_payment_id: notification.recurring_payment_id,
+                        type: notification.type,
+                    },
+                },
+            );
+        } catch (error) {
+            this.logger.error(
+                `Error sending push for notification: ${notification.id}`,
+                error,
+            );
+        }
+    }
+
+    // Push needs the account-wide toggle and, for payment events, the
+    // payment's reminders to be on with the push channel selected.
+    private async isPushEnabled(notification: NotificationModel) {
+        const userSettings = await this.userSettingsModel.findOne({
+            attributes: ['push_notifications_enabled'],
+            where: { user_id: notification.user_id },
+        });
+
+        // Settings are created lazily, so no row means the defaults (on).
+        if (userSettings && !userSettings.push_notifications_enabled) {
+            return false;
+        }
+
+        if (!notification.recurring_payment_id) {
+            return true;
+        }
+
+        const reminderSettings = await this.reminderSettingsModel.findOne({
+            attributes: ['is_enabled', 'channels'],
+            where: { recurring_payment_id: notification.recurring_payment_id },
+        });
+
+        return (
+            !!reminderSettings?.is_enabled &&
+            reminderSettings.channels.includes(ReminderChannel.Push)
         );
     }
 

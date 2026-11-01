@@ -6,8 +6,17 @@ const toIosUrlScheme = (clientId: string) =>
 
 const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
+// Path to the Firebase config Android push needs: an EAS file env var on
+// EAS builds, or ./google-services.json locally. Left out until Firebase is
+// set up so the app still builds.
+const googleServicesFile = process.env.GOOGLE_SERVICES_JSON;
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...(config as ExpoConfig),
+  android: {
+    ...config.android,
+    ...(googleServicesFile && { googleServicesFile }),
+  },
   plugins: [
     ...(config.plugins ?? []),
     "expo-dev-client",

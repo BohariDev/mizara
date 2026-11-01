@@ -5,6 +5,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/services/query-client";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { configureNotificationHandler } from "@/services/push-notification/register";
+
+configureNotificationHandler();
 
 function RootNavigator() {
   const { colorScheme } = useTheme();
