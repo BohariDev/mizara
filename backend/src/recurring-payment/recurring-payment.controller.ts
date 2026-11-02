@@ -15,12 +15,14 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { RecurringPaymentService } from '@/recurring-payment/recurring-payment.service';
+import { RecurringPaymentPresetService } from '@/recurring-payment/recurring-payment-preset.service';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { CreateRecurringPaymentDto } from './dto/create-recurring-payment.dto';
 import { FindAllRecurringPaymentDto } from './dto/find-all-recurring-payment.dto';
 import { UpdateRecurringPaymentDto } from './dto/update-recurring-payment.dto';
 import { ConfirmBillingCycleDto } from './dto/confirm-billing-cycle.dto';
+import { FindAllRecurringPaymentPresetDto } from './dto/find-all-recurring-payment-preset.dto';
 import type { AuthenticatedUser } from '@/auth/types/authenticated-user.type';
 
 @ApiTags('Recurring Payment')
@@ -29,6 +31,7 @@ import type { AuthenticatedUser } from '@/auth/types/authenticated-user.type';
 export class RecurringPaymentController {
     constructor(
         private readonly recurringPaymentService: RecurringPaymentService,
+        private readonly recurringPaymentPresetService: RecurringPaymentPresetService,
     ) {}
 
     @UseGuards(JwtAuthGuard)
@@ -49,6 +52,14 @@ export class RecurringPaymentController {
         @Query() query: FindAllRecurringPaymentDto,
     ) {
         return this.recurringPaymentService.findAll(user.id, user.email, query);
+    }
+
+    // Declared before ':id' so "presets" isn't matched as an ID.
+    @UseGuards(JwtAuthGuard)
+    @Get('presets')
+    @HttpCode(HttpStatus.OK)
+    findAllPresets(@Query() query: FindAllRecurringPaymentPresetDto) {
+        return this.recurringPaymentPresetService.findAll(query);
     }
 
     @UseGuards(JwtAuthGuard)

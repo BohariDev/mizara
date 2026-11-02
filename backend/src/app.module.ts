@@ -4,6 +4,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard, seconds } from '@nestjs/throttler';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 import { AuthModule } from '@/auth/auth.module';
 import { UserModule } from '@/user/user.module';
@@ -53,6 +55,18 @@ import { PushNotificationModule } from './push-notification/push-notification.mo
             }),
         }),
         ScheduleModule.forRoot(),
+        // Static assets (e.g. preset logos) served from backend/public at /static.
+        // process.cwd() is used because `nest build` compiles into dist/ while
+        // public/ stays at the project root.
+        ServeStaticModule.forRoot({
+            rootPath: join(process.cwd(), 'public'),
+            serveRoot: '/static',
+            serveStaticOptions: {
+                maxAge: '30d',
+                immutable: true,
+                index: false,
+            },
+        }),
         AuthModule,
         UserModule,
         EmailModule,
