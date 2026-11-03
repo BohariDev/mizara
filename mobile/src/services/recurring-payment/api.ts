@@ -6,6 +6,7 @@ import {
   CreateRecurringPaymentResponse,
   DeleteRecurringPaymentResponse,
   FindAllRecurringPaymentParams,
+  FindAllRecurringPaymentPresetResponse,
   FindAllRecurringPaymentResponse,
   FindOneRecurringPaymentResponse,
   UpdateRecurringPaymentPayload,
@@ -70,6 +71,13 @@ export const confirmBillingCycleApi = async ({
   const { data } = await api.post<ConfirmBillingCycleResponse>(
     `/recurring-payment/${id}/confirm-cycle`,
     payload,
+  );
+  return data;
+};
+
+export const getRecurringPaymentPresetsApi = async () => {
+  const { data } = await api.get<FindAllRecurringPaymentPresetResponse>(
+    "/recurring-payment/presets",
   );
   return data;
 };

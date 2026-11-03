@@ -117,3 +117,19 @@ export type ConfirmBillingCyclePayload = {
 export type ConfirmBillingCycleResponse = {
   message: string;
 };
+
+export type RecurringPaymentPreset = {
+  slug: string;
+  name: string;
+  type: RecurringPaymentType;
+  category: string;
+  icon: string;
+  aliases: string[];
+  default_billing_cycle: RecurringPaymentBillingCycle;
+  default_pricing_type: RecurringPaymentPricingType | null;
+};
+
+export type FindAllRecurringPaymentPresetResponse = {
+  message: string;
+  data: RecurringPaymentPreset[];
+};
