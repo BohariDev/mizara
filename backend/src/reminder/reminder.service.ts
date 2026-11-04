@@ -52,6 +52,7 @@ export class ReminderService {
                 'is_free_trial',
                 'is_auto_renew',
                 'billing_cycle',
+                'currency',
             ],
             where: {
                 is_archived: false,
@@ -188,6 +189,7 @@ export class ReminderService {
                             foundUser.first_name,
                             dueReminder.recurringPayment.name,
                             String(dueReminder.recurringPayment.amount),
+                            dueReminder.recurringPayment.currency,
                             dueDate,
                             dueReminder.offsetDays,
                             dueReminder.recurringPayment.billing_cycle,
@@ -198,6 +200,7 @@ export class ReminderService {
                             foundUser.first_name,
                             dueReminder.recurringPayment.name,
                             String(dueReminder.recurringPayment.amount),
+                            dueReminder.recurringPayment.currency,
                             dueDate,
                             dueReminder.offsetDays,
                         );
@@ -228,7 +231,8 @@ export class ReminderService {
                 : offsetDays === ReminderOffsetDays.OneDayBefore
                   ? 'tomorrow'
                   : `in ${offsetDays} days`;
-        const amount = `${recurringPayment.currency} ${recurringPayment.amount}`;
+        const amount = recurringPayment.amount;
+        const currency = recurringPayment.currency;
         const formattedDueDate = format(dueDate, 'MMMM d, yyyy');
         const data = {
             due_date: recurringPayment.due_date,
@@ -241,13 +245,13 @@ export class ReminderService {
                 ? {
                       type: NotificationType.FreeTrialEndingSoon,
                       title: `${recurringPayment.name} free trial ends ${when}`,
-                      body: `Your trial ends on ${formattedDueDate}. You'll be charged ${amount} (${recurringPayment.billing_cycle}) unless you cancel.`,
+                      body: `Your trial ends on ${formattedDueDate}. You'll be charged ${currency} ${amount} (${recurringPayment.billing_cycle}) unless you cancel.`,
                       data,
                   }
                 : {
                       type: NotificationType.Due,
                       title: `${recurringPayment.name} is due ${when}`,
-                      body: `${amount} is due on ${formattedDueDate}.`,
+                      body: `${currency} ${amount} is due on ${formattedDueDate}.`,
                       data,
                   },
         );
@@ -329,6 +333,7 @@ export class ReminderService {
                     foundUser.first_name,
                     bill.name,
                     String(bill.amount),
+                    bill.currency,
                     toZonedTime(bill.due_date, timezone),
                 );
 
@@ -402,6 +407,7 @@ export class ReminderService {
                     foundUser.first_name,
                     bill.name,
                     String(bill.amount),
+                    bill.currency,
                     toZonedTime(bill.due_date, timezone),
                 );
 

@@ -98,6 +98,7 @@ export class EmailService {
         recipientName: string,
         paymentName: string,
         amount: string,
+        currency: string,
         dueDate: Date,
         remainingDays: ReminderOffsetDays,
     ): Promise<void> {
@@ -122,7 +123,7 @@ export class EmailService {
             <p>${dueMessage}</p>
 
             <p><strong>Payment:</strong> ${paymentName}</p>
-            <p><strong>Amount:</strong> ${amount}</p>
+            <p><strong>Amount:</strong> ${currency} ${amount}</p>
             <p><strong>Due date:</strong> ${formattedDueDate}</p>
             <p><strong>Due time:</strong> ${formattedDueTime}</p>
 
@@ -137,6 +138,7 @@ export class EmailService {
         recipientName: string,
         paymentName: string,
         amount: string,
+        currency: string,
         trialEndDate: Date,
         remainingDays: ReminderOffsetDays,
         billingCycle: RecurringPaymentBillingCycle,
@@ -164,7 +166,7 @@ export class EmailService {
 
             <p><strong>Subscription:</strong> ${paymentName}</p>
             <p><strong>Trial ends:</strong> ${formattedDate}, ${formattedTime}</p>
-            <p><strong>Then you'll be charged:</strong> ${amount} / ${billingCycle}</p>
+            <p><strong>Then you'll be charged:</strong> ${currency} ${amount} / ${billingCycle}</p>
 
             <p>
                 Your subscription will transition to a paid subscription
@@ -179,6 +181,7 @@ export class EmailService {
         recipientName: string,
         paymentName: string,
         amount: string,
+        currency: string,
         nextDueDate: Date,
         billingCycle: RecurringPaymentBillingCycle,
     ): Promise<void> {
@@ -201,7 +204,7 @@ export class EmailService {
             </p>
 
             <p><strong>Subscription:</strong> ${paymentName}</p>
-            <p><strong>Amount:</strong> ${amount} / ${billingCycle}</p>
+            <p><strong>Amount:</strong> ${currency} ${amount} / ${billingCycle}</p>
             <p><strong>Next payment:</strong> ${formattedNextDueDate}, ${formattedNextDueTime}</p>
 
             <p>
@@ -248,6 +251,7 @@ export class EmailService {
         recipientName: string,
         paymentName: string,
         amount: string,
+        currency: string,
         dueDate: Date,
     ): Promise<void> {
         const formattedDueDate = format(dueDate, 'MMMM d, yyyy');
@@ -269,7 +273,7 @@ export class EmailService {
             </p>
 
             <p><strong>Bill:</strong> ${paymentName}</p>
-            <p><strong>Amount:</strong> ${amount}</p>
+            <p><strong>Amount:</strong> ${currency} ${amount}</p>
             <p><strong>Due date:</strong> ${formattedDueDate}, ${formattedDueTime}</p>
 
             <p>
@@ -286,6 +290,7 @@ export class EmailService {
         recipientName: string,
         paymentName: string,
         estimatedAmount: string,
+        currency: string,
         estimatedDueDate: Date,
     ): Promise<void> {
         const formattedDueDate = format(estimatedDueDate, 'MMMM d, yyyy');
@@ -308,7 +313,7 @@ export class EmailService {
             </p>
 
             <p><strong>Bill:</strong> ${paymentName}</p>
-            <p><strong>Estimated amount:</strong> ${estimatedAmount}</p>
+            <p><strong>Estimated amount:</strong> ${currency} ${estimatedAmount}</p>
             <p><strong>Estimated due date:</strong> ${formattedDueDate}, ${formattedDueTime}</p>
 
             <p>
