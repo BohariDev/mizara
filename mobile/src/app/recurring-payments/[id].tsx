@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ArrowLeftIcon from "@/assets/icons/arrow-left.svg";
 import InfoIcon from "@/assets/icons/info.svg";
 import SquarePenIcon from "@/assets/icons/square-pen.svg";
-import WalletCardsIcon from "@/assets/icons/wallet-cards.svg";
 import TriangleAlertIcon from "@/assets/icons/triangle-alert.svg";
 import { useTypography } from "@/hooks/useTypography";
 import { useRefresh } from "@/hooks/useRefresh";
@@ -32,6 +31,7 @@ import { Badge, Variant } from "@/components/Badge";
 import { RecurringPaymentDetailSkeleton } from "@/components/Skeleton";
 import { ConfirmBillingCycleModal } from "@/components/ConfirmBillingCycleModal";
 import { InfoModal } from "@/components/InfoModal";
+import { PaymentIcon } from "@/components/PaymentIcon";
 import {
   useDeleteRecurringPayment,
   useRecurringPayment,
@@ -351,20 +351,21 @@ export default function RecurringPaymentDetails() {
       ) : (
         <ScrollView
           refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-            progressBackgroundColor={colors.background}
-          />
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+              progressBackgroundColor={colors.background}
+            />
           }
           contentContainerStyle={[
             Styles.flexColumn,
             {
               width: width * SCREEN_WIDTH_RATIO,
               gap: height * 0.02,
-              paddingBottom: insets.bottom + height * SCREEN_PADDING_BOTTOM_RATIO,
+              paddingBottom:
+                insets.bottom + height * SCREEN_PADDING_BOTTOM_RATIO,
             },
           ]}
         >
@@ -430,14 +431,10 @@ export default function RecurringPaymentDetails() {
             ]}
           >
             <View style={[Styles.flexRow, { gap: 10 }]}>
-              <WalletCardsIcon
-                color={
-                  recurringPayment.is_archived
-                    ? colors.textMuted
-                    : colors.textSecondary
-                }
-                width={36}
-                height={36}
+              <PaymentIcon
+                icon={recurringPayment.icon}
+                name={recurringPayment.name}
+                size={46}
               />
               <View>
                 <Text

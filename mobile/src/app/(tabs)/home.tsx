@@ -9,7 +9,6 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import NotificationIcon from "@/assets/icons/notification.svg";
 import WalletCardsIcon from "@/assets/icons/wallet-cards.svg";
 import CalendarDaysIcon from "@/assets/icons/calendar-days.svg";
 import HourglassIcon from "@/assets/icons/hourglass.svg";
@@ -34,6 +33,7 @@ import { useRecurringPayments } from "@/services/recurring-payment/hooks";
 import { getStartOfTomorrow } from "@/utils/recurring-payment";
 import { useMyProfile, useUserSettings } from "@/services/user/hooks";
 import { getGreeting } from "@/utils/greeting";
+import { PaymentIcon } from "@/components/PaymentIcon";
 
 const formatDaysLeft = (daysLeft: number) => {
   if (daysLeft <= 0) return "Today";
@@ -305,7 +305,7 @@ export default function Home() {
                   },
                 ]}
               >
-                <WalletCardsIcon color={colors.textMuted} />
+                <PaymentIcon icon={dues.icon} name={dues.name} size={24} />
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="tail"

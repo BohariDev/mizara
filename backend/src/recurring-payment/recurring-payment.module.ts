@@ -5,6 +5,7 @@ import { RecurringPaymentService } from './recurring-payment.service';
 import { RecurringPaymentController } from './recurring-payment.controller';
 import { RecurringPaymentModel } from './models/recurring-payment.model';
 import { RecurringPaymentSchedulerService } from './recurring-payment-scheduler.service';
+import { RecurringPaymentPresetService } from './recurring-payment-preset.service';
 import { UserModule } from '@/user/user.module';
 import { EmailModule } from '@/email/email.module';
 import { CategoryModule } from '@/category/category.module';
@@ -19,7 +20,11 @@ import { NotificationModule } from '@/notification/notification.module';
         NotificationModule,
     ],
     controllers: [RecurringPaymentController],
-    providers: [RecurringPaymentService, RecurringPaymentSchedulerService],
+    providers: [
+        RecurringPaymentService,
+        RecurringPaymentSchedulerService,
+        RecurringPaymentPresetService,
+    ],
     exports: [RecurringPaymentService],
 })
 export class RecurringPaymentModule {}

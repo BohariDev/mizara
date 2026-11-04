@@ -10,6 +10,7 @@ import {
   createRecurringPaymentApi,
   deleteRecurringPaymentApi,
   getRecurringPaymentApi,
+  getRecurringPaymentPresetsApi,
   getRecurringPaymentsApi,
   updateRecurringPaymentApi,
 } from "@/services/recurring-payment/api";
@@ -172,4 +173,19 @@ export const useConfirmBillingCycle = () => {
   const errorMessage = getErrorMessage(error);
 
   return { confirmBillingCycle, isPending, errorMessage };
+};
+
+const ONE_DAY = 1000 * 60 * 60 * 24;
+
+export const useRecurringPaymentPresets = () => {
+  const { data, isPending, error, refetch } = useQuery({
+    queryKey: ["recurring-payment-presets"],
+    queryFn: getRecurringPaymentPresetsApi,
+    staleTime: ONE_DAY,
+    gcTime: ONE_DAY,
+  });
+
+  const errorMessage = getErrorMessage(error);
+
+  return { presets: data?.data ?? [], isPending, errorMessage, refetch };
 };

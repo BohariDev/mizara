@@ -11,11 +11,9 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import NotificationIcon from "@/assets/icons/notification.svg";
 import FilterIcon from "@/assets/icons/filter.svg";
 import ArrowUpIcon from "@/assets/icons/arrow-up.svg";
 import ArrowDownIcon from "@/assets/icons/arrow-down.svg";
-import WalletCardsIcon from "@/assets/icons/wallet-cards.svg";
 import { Styles } from "@/styles/stylesheets";
 import { useTypography } from "@/hooks/useTypography";
 import { useRefresh } from "@/hooks/useRefresh";
@@ -48,6 +46,7 @@ import {
   formatDueStatus,
   getDueStatusColor,
 } from "@/utils/recurring-payment";
+import { PaymentIcon } from "@/components/PaymentIcon";
 
 const SEARCH_DEBOUNCE_MS = 400;
 const PAGE_LIMIT = 10;
@@ -337,11 +336,7 @@ export default function RecurringPayments() {
                 },
               ]}
             >
-              <WalletCardsIcon
-                color={
-                  !payment.is_archived ? colors.textSecondary : colors.textMuted
-                }
-              />
+              <PaymentIcon icon={payment.icon} name={payment.name} size={42} />
               <View
                 style={[
                   Styles.flexRow,
