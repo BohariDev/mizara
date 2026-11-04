@@ -23,6 +23,7 @@ export class DashboardService {
                 where: {
                     user_id: currentUserId,
                     is_archived: false,
+                    is_paid: false,
                 },
             });
 
