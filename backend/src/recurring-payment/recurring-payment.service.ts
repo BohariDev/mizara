@@ -609,6 +609,7 @@ export class RecurringPaymentService {
             foundUser.first_name,
             payment.name,
             String(payment.amount),
+            payment.currency,
             nextDueDate,
             payment.billing_cycle,
         );
