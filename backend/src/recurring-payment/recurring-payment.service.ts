@@ -485,6 +485,13 @@ export class RecurringPaymentService {
                         );
                     }
 
+                    if (payment.is_paid) {
+                        await payment.update(
+                            { is_paid: false },
+                            { transaction },
+                        );
+                    }
+
                     let nextDueDateInTz = dueDateInTz;
                     let nextBillingDateInTz = payment.billing_date
                         ? toZonedTime(
