@@ -50,6 +50,7 @@ export class ReminderService {
                 'user_id',
                 'is_paid',
                 'is_free_trial',
+                'is_auto_renew',
                 'billing_cycle',
             ],
             where: {
@@ -122,6 +123,16 @@ export class ReminderService {
                 recurringPayment.reminder_settings?.remind_before_days ?? [];
 
             for (const offsetDays of remindBeforeDays) {
+                // Auto-renewing free trials convert to paid on their end day,
+                // and that conversion notice replaces the end-day reminder.
+                if (
+                    offsetDays === ReminderOffsetDays.DueDay &&
+                    recurringPayment.is_free_trial &&
+                    recurringPayment.is_auto_renew
+                ) {
+                    continue;
+                }
+
                 // due_date's time-of-day is preserved, so within the target
                 // day the reminder only fires once "now" reaches it. Once
                 // the target day has passed, it's skipped, not backfilled.

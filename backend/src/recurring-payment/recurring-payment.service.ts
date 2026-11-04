@@ -440,9 +440,18 @@ export class RecurringPaymentService {
                 userSettingsTimezone,
             );
 
+            const isDueToday =
+                format(dueDateInTz, 'yyyy-MM-dd') >= todayDateOnly;
+
+            // Auto-renewing free trials convert to paid on their end day,
+            // since that's when the first charge happens. They get no
+            // end-day reminder - the conversion notice replaces it.
+            const isTrialConvertingToday =
+                isDueToday && payment.is_free_trial && payment.is_auto_renew;
+
             // Due date's calendar day may still be today (reminders may
             // still be firing for it) - only roll forward past due dates.
-            if (format(dueDateInTz, 'yyyy-MM-dd') >= todayDateOnly) {
+            if (isDueToday && !isTrialConvertingToday) {
                 continue;
             }
 
