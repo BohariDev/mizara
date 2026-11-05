@@ -2,16 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { RecurringPaymentPresetService } from './recurring-payment-preset.service';
 import { RECURRING_PAYMENT_PRESETS } from './recurring-payment-presets.data';
+import { RECURRING_PAYMENT_CATEGORIES } from './recurring-payment-categories.data';
 import {
     RecurringPaymentBillingCycle,
+    RecurringPaymentCategory,
     RecurringPaymentType,
 } from '@/common/enum';
-
-// The seeder is a CommonJS file, so it's loaded with require().
-type CategoriesSeeder = { DEFAULT_CATEGORIES: { name: string }[] };
-const SEEDER_PATH = '../database/seeders/20260829071722-categories.js';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { DEFAULT_CATEGORIES } = require(SEEDER_PATH) as CategoriesSeeder;
 
 describe('RecurringPaymentPresetService', () => {
     let service: RecurringPaymentPresetService;
@@ -47,7 +43,7 @@ describe('RecurringPaymentPresetService', () => {
                 slug: 'netflix',
                 name: 'Netflix',
                 type: RecurringPaymentType.Subscription,
-                category: 'Streaming',
+                category: RecurringPaymentCategory.Streaming,
                 icon: 'presets/netflix.webp',
                 aliases: [],
                 default_billing_cycle: RecurringPaymentBillingCycle.Monthly,
@@ -82,15 +78,21 @@ describe('RecurringPaymentPresetService', () => {
                 expect(preset.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
             }
         });
+    });
 
-        // The app matches presets to categories by name, so a renamed
-        // system category would silently leave presets without one.
-        it('only uses system category names from the categories seeder', () => {
-            const categoryNames = new Set(
-                DEFAULT_CATEGORIES.map((c) => c.name),
+    describe('RECURRING_PAYMENT_CATEGORIES data', () => {
+        it('lists every category exactly once', () => {
+            const ids = RECURRING_PAYMENT_CATEGORIES.map((c) => c.id);
+            expect([...ids].sort()).toEqual(
+                Object.values(RecurringPaymentCategory).sort(),
             );
+        });
+
+        // Every preset category needs a label for the app to show.
+        it('has a label for every category a preset uses', () => {
+            const ids = new Set(RECURRING_PAYMENT_CATEGORIES.map((c) => c.id));
             const unknown = RECURRING_PAYMENT_PRESETS.filter(
-                (preset) => !categoryNames.has(preset.category),
+                (preset) => !ids.has(preset.category),
             ).map((preset) => `${preset.slug}: ${preset.category}`);
 
             expect(unknown).toEqual([]);
