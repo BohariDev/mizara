@@ -99,7 +99,7 @@ export const createRecurringPaymentSchema = z
     due_date_type: z.enum(RECURRING_PAYMENT_DUE_DATE_TYPES, {
       message: "Please select a due date type.",
     }),
-    category_id: z.string().nonempty("Please select a category."),
+    category: z.string().nonempty("Please select a category."),
     reminder_channels: z
       .array(z.enum(REMINDER_CHANNELS))
       .min(1, "Select at least one notification channel."),

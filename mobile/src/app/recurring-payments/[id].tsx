@@ -35,9 +35,9 @@ import { PaymentIcon } from "@/components/PaymentIcon";
 import {
   useDeleteRecurringPayment,
   useRecurringPayment,
+  useRecurringPaymentCategories,
   useUpdateRecurringPayment,
 } from "@/services/recurring-payment/hooks";
-import { useCategories } from "@/services/category/hooks";
 import { useReminderSettings } from "@/services/reminder-settings/hooks";
 import {
   RECURRING_PAYMENT_BILLING_DATE_TYPE_DESCRIPTIONS,
@@ -65,7 +65,7 @@ export default function RecurringPaymentDetails() {
   const { showToast } = useToast();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { categories } = useCategories();
+  const { categories } = useRecurringPaymentCategories();
   const {
     recurringPayment,
     isPending,
@@ -119,9 +119,9 @@ export default function RecurringPaymentDetails() {
   const actionErrorMessage = updateErrorMessage ?? deleteErrorMessage;
 
   const categoryName =
-    (recurringPayment?.category_id &&
+    (recurringPayment?.category &&
       categories.find(
-        (category) => category.id === recurringPayment.category_id,
+        (category) => category.id === recurringPayment.category,
       )?.name) ||
     "Uncategorized";
 

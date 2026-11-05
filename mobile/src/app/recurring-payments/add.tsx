@@ -25,8 +25,6 @@ import {
   SCREEN_WIDTH_RATIO,
 } from "@/constants/dimensions";
 import type { CreateRecurringPaymentFormData } from "@/schemas/recurring-payment";
-import { useCategories } from "@/services/category/hooks";
-import type { Category } from "@/services/category/types";
 import { useCreateRecurringPayment } from "@/services/recurring-payment/hooks";
 import type {
   CreateRecurringPaymentPayload,
@@ -48,32 +46,25 @@ const EMPTY_FORM: CreateRecurringPaymentFormData = {
   billing_date: undefined,
   billing_date_type: "Fixed",
   due_date_type: "Fixed",
-  category_id: "",
+  category: "",
   reminder_channels: [],
   reminder_remind_before_days: [],
 };
 
 /**
  * Pre-fills the form from a preset; every field can still be changed.
- * Presets name their category (e.g. "Streaming"), so it's matched to the
- * system category's ID here. If no match is found, the user picks one.
  */
 const getDefaultValues = (
   preset: RecurringPaymentPreset | null,
   customName: string,
-  categories: Category[],
 ): CreateRecurringPaymentFormData => {
   if (!preset) return { ...EMPTY_FORM, name: customName };
-
-  const category = categories.find(
-    (c) => c.user_id === null && c.name === preset.category,
-  );
 
   return {
     ...EMPTY_FORM,
     name: preset.name,
     type: preset.type,
-    category_id: category?.id ?? "",
+    category: preset.category,
     billing_cycle: preset.default_billing_cycle,
     pricing_type: preset.default_pricing_type ?? EMPTY_FORM.pricing_type,
   };
@@ -96,7 +87,6 @@ export default function AddRecurringPayment() {
     isPending: isSavingReminders,
     errorMessage: reminderErrorMessage,
   } = useUpsertReminderSettings();
-  const { categories } = useCategories();
 
   // The user first picks a service (or "Custom"), then fills in the form.
   const [step, setStep] = useState<"pick" | "form">("pick");
@@ -152,7 +142,7 @@ export default function AddRecurringPayment() {
         data.type === "Bills" ? data.billing_date?.toISOString() : undefined,
       billing_date_type: data.billing_date_type,
       due_date_type: data.due_date_type,
-      category_id: data.category_id,
+      category: data.category,
       icon: preset?.icon,
     };
 
@@ -252,7 +242,7 @@ export default function AddRecurringPayment() {
             onChange={() => setStep("pick")}
           />
           <RecurringPaymentForm
-            defaultValues={getDefaultValues(preset, customName, categories)}
+            defaultValues={getDefaultValues(preset, customName)}
             onSubmit={onSubmit}
             isPending={isPending}
             errorMessage={errorMessage}
