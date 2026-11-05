@@ -6,7 +6,6 @@ import {
     IsNumber,
     IsOptional,
     IsString,
-    IsUUID,
     MaxLength,
     Min,
 } from 'class-validator';
@@ -17,6 +16,7 @@ import {
     RecurringPaymentDueDateType,
     RecurringPaymentPricingType,
     RecurringPaymentType,
+    RecurringPaymentCategory,
 } from '@/common/enum';
 import { IsDateStringWithOffset } from '@/common/validators/is-date-string-with-offset.validator';
 
@@ -134,12 +134,11 @@ export class CreateRecurringPaymentDto {
     is_paid?: boolean;
 
     @ApiProperty({
-        example: 'b3f2c1a0-1234-4a5b-9c6d-7e8f9a0b1c2d',
+        enum: RecurringPaymentCategory,
+        example: RecurringPaymentCategory.Streaming,
         required: false,
-        description:
-            "ID of a system default category or one of the user's own categories.",
     })
     @IsOptional()
-    @IsUUID()
-    category_id?: string;
+    @IsEnum(RecurringPaymentCategory)
+    category?: RecurringPaymentCategory;
 }
