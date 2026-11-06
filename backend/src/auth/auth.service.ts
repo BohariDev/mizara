@@ -16,7 +16,7 @@ import { UserService } from '@/user/user.service';
 import { UserStatus } from '@/common/enum';
 import { VerificationCodeModel } from '@/auth/models/verification-code.model';
 import { RefreshTokenModel } from '@/auth/models/refresh-token.model';
-import { EmailService } from '@/email/email.service';
+import { EmailQueueService } from '@/email/email-queue.service';
 import { VerificationCodeType } from '@/common/enum';
 import { ChangeEmailDto } from '@/auth/dto/change-email.dto';
 import { ChangePasswordDto } from '@/auth/dto/change-password.dto';
@@ -33,7 +33,7 @@ export class AuthService {
     constructor(
         private readonly userService: UserService,
         private readonly jwtService: JwtService,
-        private readonly emailService: EmailService,
+        private readonly emailQueueService: EmailQueueService,
         @InjectModel(VerificationCodeModel)
         private readonly verificationCodeModel: typeof VerificationCodeModel,
         @InjectModel(RefreshTokenModel)
@@ -458,18 +458,13 @@ export class AuthService {
 
         this.logger.log(`${verificationType} code created for user: ${email}`);
 
-        if (verificationType === VerificationCodeType.EmailVerification) {
-            await this.emailService.sendEmailVerificationCode(email, code);
-        } else if (verificationType === VerificationCodeType.PasswordReset) {
-            await this.emailService.sendPasswordResetCode(email, code);
-        } else if (verificationType === VerificationCodeType.ChangeEmail) {
-            await this.emailService.sendChangeEmailVerificationCode(
-                email,
-                code,
-            );
-        }
+        await this.emailQueueService.enqueueVerificationCode(
+            verificationType,
+            email,
+            code,
+        );
 
-        this.logger.log(`${verificationType} code sent to user: ${email}`);
+        this.logger.log(`${verificationType} code queued for user: ${email}`);
     }
 
     private async enforceResendCooldown(

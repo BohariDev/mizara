@@ -20,7 +20,7 @@ import {
     SortOrder,
 } from '@/common/enum';
 import { UserService } from '@/user/user.service';
-import { EmailService } from '@/email/email.service';
+import { EmailQueueService } from '@/email/email-queue.service';
 import { NotificationService } from '@/notification/notification.service';
 import { UserModel } from '@/user/models/user.model';
 import { UserSettingsModel } from '@/user/models/user-settings.model';
@@ -37,7 +37,7 @@ export class RecurringPaymentService {
         @InjectConnection()
         private readonly sequelize: Sequelize,
         private readonly userService: UserService,
-        private readonly emailService: EmailService,
+        private readonly emailQueueService: EmailQueueService,
         private readonly notificationService: NotificationService,
     ) {}
 
@@ -586,7 +586,7 @@ export class RecurringPaymentService {
             data: { due_date: nextDueDate },
         });
 
-        await this.emailService.sendFreeTrialConvertedToPaid(
+        await this.emailQueueService.enqueue('sendFreeTrialConvertedToPaid', [
             foundUser.email,
             foundUser.first_name,
             payment.name,
@@ -594,7 +594,7 @@ export class RecurringPaymentService {
             payment.currency,
             nextDueDate,
             payment.billing_cycle,
-        );
+        ]);
     }
 
     private async notifyFreeTrialEnded(
@@ -617,12 +617,12 @@ export class RecurringPaymentService {
             data: { due_date: payment.due_date },
         });
 
-        await this.emailService.sendFreeTrialEnded(
+        await this.emailQueueService.enqueue('sendFreeTrialEnded', [
             foundUser.email,
             foundUser.first_name,
             payment.name,
             trialEndDate,
-        );
+        ]);
     }
 
     private async notifyPaymentArchived(
@@ -645,12 +645,12 @@ export class RecurringPaymentService {
             data: { due_date: payment.due_date },
         });
 
-        await this.emailService.sendPaymentArchived(
+        await this.emailQueueService.enqueue('sendPaymentArchived', [
             foundUser.email,
             foundUser.first_name,
             payment.name,
             dueDate,
-        );
+        ]);
     }
 
     // A failed notification shouldn't stop the email from being sent.

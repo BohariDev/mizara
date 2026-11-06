@@ -16,7 +16,7 @@ import {
 } from '@/common/enum';
 import { DueReminder } from './types/due-reminder.type';
 import { UserService } from '@/user/user.service';
-import { EmailService } from '@/email/email.service';
+import { EmailQueueService } from '@/email/email-queue.service';
 import { NotificationService } from '@/notification/notification.service';
 import { UserModel } from '@/user/models/user.model';
 import { UserSettingsModel } from '@/user/models/user-settings.model';
@@ -29,7 +29,7 @@ export class ReminderService {
 
     constructor(
         private readonly userService: UserService,
-        private readonly emailService: EmailService,
+        private readonly emailQueueService: EmailQueueService,
         private readonly notificationService: NotificationService,
         @InjectModel(RecurringPaymentModel)
         private recurringPaymentModel: typeof RecurringPaymentModel,
@@ -157,69 +157,112 @@ export class ReminderService {
         return dueReminders;
     }
 
+    // A failure for one reminder (or one channel) is logged and skipped so
+    // the rest of the run still goes out.
     async sendDueReminders(dueReminders: DueReminder[]) {
         for (const dueReminder of dueReminders) {
-            const userId = dueReminder.recurringPayment.user_id;
-            const foundUser = await this.userService.findById(userId);
-
-            if (!foundUser) {
-                this.logger.warn(
-                    `User not found for recurring payment: ${dueReminder.recurringPayment.id} - cron job not completed.`,
-                );
-                return;
-            }
-
-            const reminderChannels =
-                dueReminder.recurringPayment.reminder_settings?.channels ?? [];
-
-            for (const reminderChannel of reminderChannels) {
-                this.logger.log(
-                    `Sending reminder to user: ${foundUser.email} via ${reminderChannel}`,
-                );
-
-                const dueDate = toZonedTime(
-                    dueReminder.recurringPayment.due_date,
-                    dueReminder.timezone,
-                );
-
-                if (reminderChannel === ReminderChannel.Email) {
-                    if (dueReminder.recurringPayment.is_free_trial) {
-                        await this.emailService.sendFreeTrialReminder(
-                            foundUser.email,
-                            foundUser.first_name,
-                            dueReminder.recurringPayment.name,
-                            String(dueReminder.recurringPayment.amount),
-                            dueReminder.recurringPayment.currency,
-                            dueDate,
-                            dueReminder.offsetDays,
-                            dueReminder.recurringPayment.billing_cycle,
-                        );
-                    } else {
-                        await this.emailService.sendDueReminder(
-                            foundUser.email,
-                            foundUser.first_name,
-                            dueReminder.recurringPayment.name,
-                            String(dueReminder.recurringPayment.amount),
-                            dueReminder.recurringPayment.currency,
-                            dueDate,
-                            dueReminder.offsetDays,
-                        );
-                    }
-                }
-
-                await this.recordSent(
-                    dueReminder.recurringPayment.id,
-                    dueReminder.offsetDays,
-                    reminderChannel,
-                    dueReminder.timezone,
-                );
-                this.logger.log(
-                    `Successfully sent reminder to user: ${foundUser.email} via ${reminderChannel}`,
+            try {
+                await this.sendDueReminder(dueReminder);
+            } catch (error) {
+                this.logger.error(
+                    `Error sending due reminder for recurring payment: ${dueReminder.recurringPayment.id}`,
+                    error,
                 );
             }
-
-            await this.createDueNotification(dueReminder);
         }
+    }
+
+    private async sendDueReminder(dueReminder: DueReminder) {
+        const userId = dueReminder.recurringPayment.user_id;
+        const foundUser = await this.userService.findById(userId);
+
+        if (!foundUser) {
+            this.logger.warn(
+                `User not found for recurring payment: ${dueReminder.recurringPayment.id} - due reminder not sent.`,
+            );
+            return;
+        }
+
+        const reminderChannels =
+            dueReminder.recurringPayment.reminder_settings?.channels ?? [];
+        let failedChannels = 0;
+
+        for (const reminderChannel of reminderChannels) {
+            try {
+                await this.sendDueReminderViaChannel(
+                    dueReminder,
+                    foundUser,
+                    reminderChannel,
+                );
+            } catch (error) {
+                failedChannels++;
+                this.logger.error(
+                    `Error sending reminder to user: ${foundUser.email} via ${reminderChannel} for recurring payment: ${dueReminder.recurringPayment.id}`,
+                    error,
+                );
+            }
+        }
+
+        // Nothing was recorded, so the next run retries this reminder -
+        // creating the notification now would duplicate it.
+        if (
+            reminderChannels.length > 0 &&
+            failedChannels === reminderChannels.length
+        ) {
+            return;
+        }
+
+        await this.createDueNotification(dueReminder);
+    }
+
+    private async sendDueReminderViaChannel(
+        dueReminder: DueReminder,
+        foundUser: UserModel,
+        reminderChannel: ReminderChannel,
+    ) {
+        this.logger.log(
+            `Sending reminder to user: ${foundUser.email} via ${reminderChannel}`,
+        );
+
+        const dueDate = toZonedTime(
+            dueReminder.recurringPayment.due_date,
+            dueReminder.timezone,
+        );
+
+        if (reminderChannel === ReminderChannel.Email) {
+            if (dueReminder.recurringPayment.is_free_trial) {
+                await this.emailQueueService.enqueue('sendFreeTrialReminder', [
+                    foundUser.email,
+                    foundUser.first_name,
+                    dueReminder.recurringPayment.name,
+                    String(dueReminder.recurringPayment.amount),
+                    dueReminder.recurringPayment.currency,
+                    dueDate,
+                    dueReminder.offsetDays,
+                    dueReminder.recurringPayment.billing_cycle,
+                ]);
+            } else {
+                await this.emailQueueService.enqueue('sendDueReminder', [
+                    foundUser.email,
+                    foundUser.first_name,
+                    dueReminder.recurringPayment.name,
+                    String(dueReminder.recurringPayment.amount),
+                    dueReminder.recurringPayment.currency,
+                    dueDate,
+                    dueReminder.offsetDays,
+                ]);
+            }
+        }
+
+        await this.recordSent(
+            dueReminder.recurringPayment.id,
+            dueReminder.offsetDays,
+            reminderChannel,
+            dueReminder.timezone,
+        );
+        this.logger.log(
+            `Successfully sent reminder to user: ${foundUser.email} via ${reminderChannel}`,
+        );
     }
 
     private async createDueNotification(dueReminder: DueReminder) {
@@ -328,14 +371,14 @@ export class ReminderService {
 
                 const timezone = this.getTimezone(bill);
 
-                await this.emailService.sendBillOverdue(
+                await this.emailQueueService.enqueue('sendBillOverdue', [
                     foundUser.email,
                     foundUser.first_name,
                     bill.name,
                     String(bill.amount),
                     bill.currency,
                     toZonedTime(bill.due_date, timezone),
-                );
+                ]);
 
                 await this.recordSentForCycle(
                     bill,
@@ -402,13 +445,16 @@ export class ReminderService {
 
                 const timezone = this.getTimezone(bill);
 
-                await this.emailService.sendBillCycleConfirmationRequest(
-                    foundUser.email,
-                    foundUser.first_name,
-                    bill.name,
-                    String(bill.amount),
-                    bill.currency,
-                    toZonedTime(bill.due_date, timezone),
+                await this.emailQueueService.enqueue(
+                    'sendBillCycleConfirmationRequest',
+                    [
+                        foundUser.email,
+                        foundUser.first_name,
+                        bill.name,
+                        String(bill.amount),
+                        bill.currency,
+                        toZonedTime(bill.due_date, timezone),
+                    ],
                 );
 
                 await this.recordSentForCycle(
