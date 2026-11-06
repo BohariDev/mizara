@@ -121,6 +121,7 @@ export class PushNotificationService {
 
         const sentTickets: { ticket_id: string; push_token_id: string }[] = [];
         const deadPushTokenIds: string[] = [];
+        let sendError: unknown;
 
         for (const chunk of this.expo.chunkPushNotifications(messages)) {
             let tickets: ExpoPushTicket[];
@@ -132,6 +133,7 @@ export class PushNotificationService {
                     `Error sending push notifications for user: ${userId}`,
                     error,
                 );
+                sendError = error;
                 continue;
             }
 
@@ -163,6 +165,12 @@ export class PushNotificationService {
         }
 
         await this.removeDeadTokens(deadPushTokenIds);
+
+        // Surface Expo outages so the push job is retried. The other chunks
+        // were still sent and their tickets saved.
+        if (sendError) {
+            throw sendError;
+        }
     }
 
     async checkReceipts() {
