@@ -10,6 +10,7 @@ import { join } from 'path';
 import { AuthModule } from '@/auth/auth.module';
 import { UserModule } from '@/user/user.module';
 import { EmailModule } from '@/email/email.module';
+import { QueueModule } from '@/queue/queue.module';
 import { RecurringPaymentModule } from './recurring-payment/recurring-payment.module';
 import { ReminderModule } from './reminder/reminder.module';
 import { TransformInterceptor } from '@/common/interceptors/transform.interceptor';
@@ -54,6 +55,7 @@ import { PushNotificationModule } from './push-notification/push-notification.mo
             }),
         }),
         ScheduleModule.forRoot(),
+        QueueModule,
         // Static assets (e.g. preset logos) served from backend/public at /static.
         // process.cwd() is used because `nest build` compiles into dist/ while
         // public/ stays at the project root.
