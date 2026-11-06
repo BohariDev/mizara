@@ -1,6 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
+import basicAuth from 'express-basic-auth';
+
+const queueDashboardAuth = basicAuth({
+    challenge: true,
+    realm: 'Queue Dashboard',
+    users: {
+        [process.env.QUEUE_DASHBOARD_USERNAME!]:
+            process.env.QUEUE_DASHBOARD_PASSWORD!,
+    },
+});
 
 /**
  * Shared Redis connection and default job options for every BullMQ queue.
@@ -29,6 +41,11 @@ import { BullModule } from '@nestjs/bullmq';
                     removeOnFail: { age: 24 * 60 * 60 },
                 },
             }),
+        }),
+        BullBoardModule.forRoot({
+            route: '/queues',
+            adapter: ExpressAdapter,
+            middleware: queueDashboardAuth,
         }),
     ],
 })

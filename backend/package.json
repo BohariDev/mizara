@@ -27,6 +27,9 @@
     "logos:build": "node scripts/logos/build-logos.js"
   },
   "dependencies": {
+    "@bull-board/api": "^9.11.0",
+    "@bull-board/express": "^9.11.0",
+    "@bull-board/nestjs": "^9.11.0",
     "@nestjs/bullmq": "^11.0.5",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
@@ -47,6 +50,7 @@
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.4.2",
     "expo-server-sdk": "^5.0.0",
+    "express-basic-auth": "^1.2.1",
     "google-auth-library": "^11.3.1",
     "ioredis": "^6.0.0",
     "nodemailer": "^9.0.5",
