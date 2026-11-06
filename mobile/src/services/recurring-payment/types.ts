@@ -36,7 +36,7 @@ export type RecurringPayment = {
   due_date_type: RecurringPaymentDueDateType;
   is_paid: boolean;
   needs_cycle_confirmation: boolean;
-  category_id: string | null;
+  category: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -50,7 +50,7 @@ export type FindAllRecurringPaymentParams = {
   is_archived?: boolean;
   is_auto_renew?: boolean;
   is_free_trial?: boolean;
-  category_id?: string;
+  category?: string;
   search?: string;
   needs_cycle_confirmation?: boolean;
   confirmation_due_before?: string;
@@ -84,7 +84,7 @@ export type CreateRecurringPaymentPayload = {
   billing_date_type?: RecurringPaymentBillingDateType;
   due_date_type?: RecurringPaymentDueDateType;
   is_paid?: boolean;
-  category_id?: string;
+  category?: string;
 };
 
 export type CreateRecurringPaymentResponse = {
@@ -116,6 +116,16 @@ export type ConfirmBillingCyclePayload = {
 
 export type ConfirmBillingCycleResponse = {
   message: string;
+};
+
+export type RecurringPaymentCategory = {
+  id: string;
+  name: string;
+};
+
+export type FindAllRecurringPaymentCategoryResponse = {
+  message: string;
+  data: RecurringPaymentCategory[];
 };
 
 export type RecurringPaymentPreset = {

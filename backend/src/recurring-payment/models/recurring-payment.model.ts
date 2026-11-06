@@ -19,13 +19,13 @@ import { UserModel } from '@/user/models/user.model';
 import { ReminderSettingsModel } from '@/reminder/models/reminder-settings.model';
 import {
     RecurringPaymentBillingCycle,
+    RecurringPaymentCategory,
     RecurringPaymentBillingDateType,
     RecurringPaymentDueDateType,
     RecurringPaymentPricingType,
     RecurringPaymentType,
 } from '@/common/enum';
 import { SentReminderModel } from '@/reminder/models/sent-reminder.model';
-import { CategoryModel } from '@/category/models/category.model';
 
 interface RecurringPayment {
     id?: string;
@@ -47,7 +47,7 @@ interface RecurringPayment {
     due_date_type?: RecurringPaymentDueDateType;
     is_paid?: boolean;
     needs_cycle_confirmation?: boolean;
-    category_id?: string | null;
+    category?: RecurringPaymentCategory | null;
     created_at?: Date | null;
     updated_at?: Date | null;
     deleted_at?: Date | null;
@@ -184,12 +184,11 @@ export class RecurringPaymentModel extends Model<RecurringPayment> {
     })
     declare needs_cycle_confirmation: boolean;
 
-    @ForeignKey(() => CategoryModel)
     @Column({
-        type: DataType.UUID,
+        type: DataType.STRING,
         allowNull: true,
     })
-    declare category_id: string | null;
+    declare category: RecurringPaymentCategory | null;
 
     @CreatedAt
     declare created_at: Date;
@@ -217,10 +216,4 @@ export class RecurringPaymentModel extends Model<RecurringPayment> {
         as: 'sent_reminders',
     })
     declare sent_reminders: SentReminderModel[];
-
-    @BelongsTo(() => CategoryModel, {
-        foreignKey: 'category_id',
-        as: 'category',
-    })
-    declare category: CategoryModel | null;
 }

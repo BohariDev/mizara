@@ -10,6 +10,7 @@ import {
   createRecurringPaymentApi,
   deleteRecurringPaymentApi,
   getRecurringPaymentApi,
+  getRecurringPaymentCategoriesApi,
   getRecurringPaymentPresetsApi,
   getRecurringPaymentsApi,
   updateRecurringPaymentApi,
@@ -176,6 +177,19 @@ export const useConfirmBillingCycle = () => {
 };
 
 const ONE_DAY = 1000 * 60 * 60 * 24;
+
+export const useRecurringPaymentCategories = () => {
+  const { data, isPending, error } = useQuery({
+    queryKey: ["recurring-payment-categories"],
+    queryFn: getRecurringPaymentCategoriesApi,
+    staleTime: ONE_DAY,
+    gcTime: ONE_DAY,
+  });
+
+  const errorMessage = getErrorMessage(error);
+
+  return { categories: data?.data ?? [], isPending, errorMessage };
+};
 
 export const useRecurringPaymentPresets = () => {
   const { data, isPending, error, refetch } = useQuery({

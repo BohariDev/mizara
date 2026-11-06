@@ -6,7 +6,6 @@ import {
     IsInt,
     IsOptional,
     IsString,
-    IsUUID,
     Min,
 } from 'class-validator';
 
@@ -14,6 +13,7 @@ import {
     RecurringPaymentSortBy,
     RecurringPaymentType,
     SortOrder,
+    RecurringPaymentCategory,
 } from '@/common/enum';
 import { IsDateStringWithOffset } from '@/common/validators/is-date-string-with-offset.validator';
 
@@ -109,8 +109,11 @@ export class FindAllRecurringPaymentDto {
     @IsDateStringWithOffset()
     confirmation_due_before?: string;
 
-    @ApiPropertyOptional({ example: 'b3f2c1a0-1234-4a5b-9c6d-7e8f9a0b1c2d' })
+    @ApiPropertyOptional({
+        enum: RecurringPaymentCategory,
+        example: RecurringPaymentCategory.Streaming,
+    })
     @IsOptional()
-    @IsUUID()
-    category_id?: string;
+    @IsEnum(RecurringPaymentCategory)
+    category?: RecurringPaymentCategory;
 }

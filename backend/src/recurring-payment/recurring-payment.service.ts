@@ -21,7 +21,6 @@ import {
 } from '@/common/enum';
 import { UserService } from '@/user/user.service';
 import { EmailService } from '@/email/email.service';
-import { CategoryService } from '@/category/category.service';
 import { NotificationService } from '@/notification/notification.service';
 import { UserModel } from '@/user/models/user.model';
 import { UserSettingsModel } from '@/user/models/user-settings.model';
@@ -39,7 +38,6 @@ export class RecurringPaymentService {
         private readonly sequelize: Sequelize,
         private readonly userService: UserService,
         private readonly emailService: EmailService,
-        private readonly categoryService: CategoryService,
         private readonly notificationService: NotificationService,
     ) {}
 
@@ -53,14 +51,6 @@ export class RecurringPaymentService {
             this.logger.log(
                 `Creating recurring payment for user: ${currentUserEmail}`,
             );
-
-            if (dto.category_id !== undefined) {
-                await this.categoryService.findAccessibleOrFail(
-                    dto.category_id,
-                    currentUserId,
-                    currentUserEmail,
-                );
-            }
 
             const createdRecurringPayment =
                 await this.recurringPaymentModel.create(
@@ -84,7 +74,7 @@ export class RecurringPaymentService {
                         is_archived: dto.is_archived,
                         is_free_trial: dto.is_free_trial,
                         icon: dto.icon,
-                        category_id: dto.category_id,
+                        category: dto.category,
                     },
                     { transaction },
                 );
@@ -144,8 +134,8 @@ export class RecurringPaymentService {
                         ...(query.is_free_trial !== undefined && {
                             is_free_trial: query.is_free_trial,
                         }),
-                        ...(query.category_id !== undefined && {
-                            category_id: query.category_id,
+                        ...(query.category !== undefined && {
+                            category: query.category,
                         }),
                         ...(query.needs_cycle_confirmation !== undefined && {
                             needs_cycle_confirmation:
@@ -255,14 +245,6 @@ export class RecurringPaymentService {
                 throw new NotFoundException('Recurring payment not found');
             }
 
-            if (dto.category_id !== undefined) {
-                await this.categoryService.findAccessibleOrFail(
-                    dto.category_id,
-                    currentUserId,
-                    currentUserEmail,
-                );
-            }
-
             await recurringPayment.update(
                 {
                     ...(dto.name !== undefined && { name: dto.name }),
@@ -305,8 +287,8 @@ export class RecurringPaymentService {
                         is_free_trial: dto.is_free_trial,
                     }),
                     ...(dto.icon !== undefined && { icon: dto.icon }),
-                    ...(dto.category_id !== undefined && {
-                        category_id: dto.category_id,
+                    ...(dto.category !== undefined && {
+                        category: dto.category,
                     }),
                 },
                 { transaction },

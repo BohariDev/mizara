@@ -37,8 +37,10 @@ import {
 } from "@/components/RecurringPaymentsSortMenu";
 import { Badge, Variant } from "@/components/Badge";
 import { RecurringPaymentListSkeleton } from "@/components/Skeleton";
-import { useRecurringPayments } from "@/services/recurring-payment/hooks";
-import { useCategories } from "@/services/category/hooks";
+import {
+  useRecurringPaymentCategories,
+  useRecurringPayments,
+} from "@/services/recurring-payment/hooks";
 import type { RecurringPayment } from "@/services/recurring-payment/types";
 import {
   formatAmount,
@@ -67,7 +69,7 @@ export default function RecurringPayments() {
     sort_by: "due_date",
     sort_order: "ASC",
   });
-  const { categories } = useCategories();
+  const { categories } = useRecurringPaymentCategories();
   const {
     recurringPayments,
     isPending,

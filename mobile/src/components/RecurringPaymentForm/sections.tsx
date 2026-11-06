@@ -18,7 +18,7 @@ import {
   REMINDER_OFFSET_DAY_LABELS,
   type CreateRecurringPaymentFormData,
 } from "@/schemas/recurring-payment";
-import { useCategories } from "@/services/category/hooks";
+import { useRecurringPaymentCategories } from "@/services/recurring-payment/hooks";
 import { Styles } from "@/styles/stylesheets";
 import {
   CheckboxGroupField,
@@ -31,7 +31,7 @@ import {
 } from "./fields";
 
 function BasicsSection() {
-  const { categories } = useCategories();
+  const { categories } = useRecurringPaymentCategories();
 
   return (
     <>
@@ -47,7 +47,7 @@ function BasicsSection() {
 
       {categories.length > 0 && (
         <SelectInputField
-          name="category_id"
+          name="category"
           label="Category"
           required
           placeholder="Select category"
@@ -207,7 +207,7 @@ export const SECTIONS: {
   {
     title: "Basics",
     subtitle: "Tell us what this payment is for.",
-    fields: ["name", "type", "category_id", "description"],
+    fields: ["name", "type", "category", "description"],
     Content: BasicsSection,
   },
   {

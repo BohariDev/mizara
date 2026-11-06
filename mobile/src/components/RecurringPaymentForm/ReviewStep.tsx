@@ -11,7 +11,7 @@ import {
   REMINDER_OFFSET_DAY_LABELS,
   type CreateRecurringPaymentFormData,
 } from "@/schemas/recurring-payment";
-import { useCategories } from "@/services/category/hooks";
+import { useRecurringPaymentCategories } from "@/services/recurring-payment/hooks";
 import { Styles } from "@/styles/stylesheets";
 import { FontWeights } from "@/styles/typography";
 import { formatAmount, formatDueDate } from "@/utils/recurring-payment";
@@ -43,7 +43,7 @@ export function ReviewStep({
 }: {
   onEditSection: (sectionIndex: number) => void;
 }) {
-  const { categories } = useCategories();
+  const { categories } = useRecurringPaymentCategories();
   const values = useWatch<CreateRecurringPaymentFormData>();
   const isBill = values.type === "Bills";
 
@@ -54,7 +54,7 @@ export function ReviewStep({
       { label: "Type", value: values.type },
       {
         label: "Category",
-        value: categories.find((c) => c.id === values.category_id)?.name,
+        value: categories.find((c) => c.id === values.category)?.name,
       },
       { label: "Description", value: values.description },
     ],

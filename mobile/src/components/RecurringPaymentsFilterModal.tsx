@@ -26,7 +26,7 @@ export type RecurringPaymentFilters = {
   is_archived?: boolean;
   is_auto_renew?: boolean;
   is_free_trial?: boolean;
-  category_id?: string;
+  category?: string;
 };
 
 export type FilterCategory = {
@@ -89,7 +89,7 @@ export const RecurringPaymentsFilterModal = ({
   const toggleCategory = (categoryId: string) => {
     setDraft((prev) => ({
       ...prev,
-      category_id: prev.category_id === categoryId ? undefined : categoryId,
+      category: prev.category === categoryId ? undefined : categoryId,
     }));
   };
 
@@ -190,7 +190,7 @@ export const RecurringPaymentsFilterModal = ({
                     <FilterChip
                       key={category.id}
                       label={category.name}
-                      selected={draft.category_id === category.id}
+                      selected={draft.category === category.id}
                       onPress={() => toggleCategory(category.id)}
                     />
                   ))}

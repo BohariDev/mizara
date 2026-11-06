@@ -84,3 +84,16 @@ export enum RecurringPaymentBillingDateType {
     Fixed = 'Fixed',
     Variable = 'Variable',
 }
+
+export enum RecurringPaymentCategory {
+    Streaming = 'streaming',
+    Utilities = 'utilities',
+    Insurance = 'insurance',
+    Housing = 'housing',
+    Food = 'food',
+    Transportation = 'transportation',
+    HealthFitness = 'health-fitness',
+    Software = 'software',
+    Entertainment = 'entertainment',
+    Other = 'other',
+}

@@ -12,7 +12,6 @@ import { UserModule } from '@/user/user.module';
 import { EmailModule } from '@/email/email.module';
 import { RecurringPaymentModule } from './recurring-payment/recurring-payment.module';
 import { ReminderModule } from './reminder/reminder.module';
-import { CategoryModule } from './category/category.module';
 import { TransformInterceptor } from '@/common/interceptors/transform.interceptor';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { NotificationModule } from './notification/notification.module';
@@ -72,7 +71,6 @@ import { PushNotificationModule } from './push-notification/push-notification.mo
         EmailModule,
         RecurringPaymentModule,
         ReminderModule,
-        CategoryModule,
         DashboardModule,
         NotificationModule,
         PushNotificationModule,

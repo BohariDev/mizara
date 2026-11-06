@@ -8,7 +8,6 @@ import { RecurringPaymentSchedulerService } from './recurring-payment-scheduler.
 import { RecurringPaymentPresetService } from './recurring-payment-preset.service';
 import { UserModule } from '@/user/user.module';
 import { EmailModule } from '@/email/email.module';
-import { CategoryModule } from '@/category/category.module';
 import { NotificationModule } from '@/notification/notification.module';
 
 @Module({
@@ -16,7 +15,6 @@ import { NotificationModule } from '@/notification/notification.module';
         SequelizeModule.forFeature([RecurringPaymentModel]),
         UserModule,
         EmailModule,
-        CategoryModule,
         NotificationModule,
     ],
     controllers: [RecurringPaymentController],
