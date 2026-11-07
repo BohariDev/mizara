@@ -113,6 +113,7 @@ export class AuthController {
         );
     }
 
+    @Throttle({ default: { limit: 3, ttl: seconds(60) } })
     @UseGuards(JwtAuthGuard)
     @Post('change-email')
     @HttpCode(HttpStatus.OK)
@@ -123,6 +124,7 @@ export class AuthController {
         return this.authService.changeEmail(user.email, dto);
     }
 
+    @Throttle({ default: { limit: 5, ttl: seconds(60) } })
     @UseGuards(JwtAuthGuard)
     @Post('verify-change-email')
     @HttpCode(HttpStatus.OK)
@@ -133,6 +135,7 @@ export class AuthController {
         return this.authService.verifyChangeEmail(user.email, dto);
     }
 
+    @Throttle({ default: { limit: 5, ttl: seconds(60) } })
     @UseGuards(JwtAuthGuard)
     @Post('change-password')
     @HttpCode(HttpStatus.OK)
