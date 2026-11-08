@@ -1,11 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Sequelize } from 'sequelize-typescript';
 
 import { AppModule } from './app.module';
+import { runMigrations } from './database/migrate';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
+    app.enableShutdownHooks();
 
     app.useGlobalPipes(
         new ValidationPipe({
@@ -24,6 +28,8 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, swaggerDocument, {
         customSiteTitle: 'Mizara API Docs',
     });
+
+    await runMigrations(app.get(Sequelize));
 
     await app.listen(process.env.PORT ?? 3000);
     Logger.log(`Application is running on: ${await app.getUrl()}`);

@@ -1,0 +1,47 @@
+name: mizara
+
+services:
+    postgres:
+        image: postgres:17-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: mizara_db
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U postgres -d mizara_db']
+            interval: 5s
+            retries: 10
+
+    redis:
+        image: redis:8-alpine
+        restart: unless-stopped
+        command: ['redis-server', '--maxmemory-policy', 'noeviction']
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            retries: 10
+
+    api:
+        build: .
+        image: boharidev/mizara-api:latest
+        restart: unless-stopped
+        init: true
+        env_file: .env
+        environment:
+            DATABASE_URL: postgresql://postgres:postgres@postgres:5432/mizara_db
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            RUN_MIGRATIONS: 'true'
+        ports:
+            - '3000:3000'
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+
+volumes:
+    postgres-data:
