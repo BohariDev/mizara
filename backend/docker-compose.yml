@@ -1,0 +1,55 @@
+name: mizara
+
+services:
+    postgres:
+        image: postgres:17-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+            POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"',
+                ]
+            interval: 5s
+            retries: 10
+
+    redis:
+        image: redis:8-alpine
+        restart: unless-stopped
+        command: redis-server --maxmemory-policy noeviction --requirepass ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+        environment:
+            REDISCLI_AUTH: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+        healthcheck:
+            test: ['CMD-SHELL', 'redis-cli ping | grep -q PONG']
+            interval: 5s
+            retries: 10
+
+    backend:
+        build: .
+        image: boharidev/mizara-backend:latest
+        restart: unless-stopped
+        init: true
+        env_file: .env
+        environment:
+            DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+            REDIS_HOST: ${REDIS_HOST:?set REDIS_HOST in .env}
+            REDIS_PORT: ${REDIS_PORT:?set REDIS_PORT in .env}
+            REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+            RUN_MIGRATIONS: 'true'
+            PORT: 3000
+        ports:
+            - '${BACKEND_PORT:-3000}:3000'
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+
+volumes:
+    postgres-data:
