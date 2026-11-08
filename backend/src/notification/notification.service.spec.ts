@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/sequelize';
+import { getQueueToken } from '@nestjs/bullmq';
 import { NotFoundException } from '@nestjs/common';
 
 import { NotificationService } from './notification.service';
@@ -8,6 +9,7 @@ import { PushNotificationService } from '@/push-notification/push-notification.s
 import { UserSettingsModel } from '@/user/models/user-settings.model';
 import { ReminderSettingsModel } from '@/reminder/models/reminder-settings.model';
 import { NotificationType, ReminderChannel } from '@/common/enum';
+import { PUSH_QUEUE, PushJobName } from './push-queue.constants';
 
 describe('NotificationService', () => {
     let service: NotificationService;
@@ -15,12 +17,14 @@ describe('NotificationService', () => {
         create: jest.fn(),
         findAndCountAll: jest.fn(),
         findOne: jest.fn(),
+        findByPk: jest.fn(),
         count: jest.fn(),
         update: jest.fn(),
     };
     const userSettingsModel = { findOne: jest.fn() };
     const reminderSettingsModel = { findOne: jest.fn() };
     const pushNotificationService = { sendToUser: jest.fn() };
+    const pushQueue = { add: jest.fn() };
 
     beforeEach(async () => {
         jest.clearAllMocks();
@@ -44,6 +48,7 @@ describe('NotificationService', () => {
                     provide: PushNotificationService,
                     useValue: pushNotificationService,
                 },
+                { provide: getQueueToken(PUSH_QUEUE), useValue: pushQueue },
             ],
         }).compile();
 
@@ -68,6 +73,48 @@ describe('NotificationService', () => {
                 id: 'notification-id',
                 ...notification,
             });
+        });
+
+        it('queues one push job per notification', async () => {
+            await service.create(notification);
+
+            expect(pushQueue.add).toHaveBeenCalledWith(
+                PushJobName.Deliver,
+                { notification_id: 'notification-id' },
+                { jobId: 'notification-notification-id' },
+            );
+        });
+
+        it('still returns the notification when queueing fails', async () => {
+            pushQueue.add.mockRejectedValue(new Error('Redis is down'));
+
+            await expect(service.create(notification)).resolves.toMatchObject({
+                id: 'notification-id',
+            });
+        });
+
+        it('defers queueing until the transaction commits', async () => {
+            const transaction = { afterCommit: jest.fn() };
+
+            await service.create(notification, transaction as never);
+
+            expect(pushQueue.add).not.toHaveBeenCalled();
+            expect(transaction.afterCommit).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('deliverPush', () => {
+        const notification = {
+            id: 'notification-id',
+            user_id: 'user-id',
+            recurring_payment_id: 'payment-id',
+            type: NotificationType.Due,
+            title: 'Netflix is due tomorrow',
+            body: 'PHP 549 is due on November 1, 2026.',
+        };
+
+        beforeEach(() => {
+            notificationModel.findByPk.mockResolvedValue(notification);
             userSettingsModel.findOne.mockResolvedValue({
                 push_notifications_enabled: true,
             });
@@ -78,7 +125,7 @@ describe('NotificationService', () => {
         });
 
         it('pushes when the account and payment allow push', async () => {
-            await service.create(notification);
+            await service.deliverPush('notification-id');
 
             expect(pushNotificationService.sendToUser).toHaveBeenCalledWith(
                 'user-id',
@@ -94,12 +141,20 @@ describe('NotificationService', () => {
             );
         });
 
+        it('skips push when the notification was deleted', async () => {
+            notificationModel.findByPk.mockResolvedValue(null);
+
+            await service.deliverPush('notification-id');
+
+            expect(pushNotificationService.sendToUser).not.toHaveBeenCalled();
+        });
+
         it('skips push when the account toggle is off', async () => {
             userSettingsModel.findOne.mockResolvedValue({
                 push_notifications_enabled: false,
             });
 
-            await service.create(notification);
+            await service.deliverPush('notification-id');
 
             expect(pushNotificationService.sendToUser).not.toHaveBeenCalled();
         });
@@ -110,7 +165,7 @@ describe('NotificationService', () => {
                 channels: [ReminderChannel.Email],
             });
 
-            await service.create(notification);
+            await service.deliverPush('notification-id');
 
             expect(pushNotificationService.sendToUser).not.toHaveBeenCalled();
         });
@@ -121,28 +176,19 @@ describe('NotificationService', () => {
                 channels: [ReminderChannel.Push],
             });
 
-            await service.create(notification);
+            await service.deliverPush('notification-id');
 
             expect(pushNotificationService.sendToUser).not.toHaveBeenCalled();
         });
 
-        it('still returns the notification when push fails', async () => {
+        it('rethrows push failures so the job retries', async () => {
             pushNotificationService.sendToUser.mockRejectedValue(
                 new Error('Expo is down'),
             );
 
-            await expect(service.create(notification)).resolves.toMatchObject({
-                id: 'notification-id',
-            });
-        });
-
-        it('defers push until the transaction commits', async () => {
-            const transaction = { afterCommit: jest.fn() };
-
-            await service.create(notification, transaction as never);
-
-            expect(pushNotificationService.sendToUser).not.toHaveBeenCalled();
-            expect(transaction.afterCommit).toHaveBeenCalledTimes(1);
+            await expect(
+                service.deliverPush('notification-id'),
+            ).rejects.toThrow('Expo is down');
         });
     });
 

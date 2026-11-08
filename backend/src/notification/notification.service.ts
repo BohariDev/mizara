@@ -1,5 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { Op, Transaction } from 'sequelize';
 
 import { NotificationModel } from '@/notification/models/notification.model';
@@ -9,6 +11,7 @@ import { PushNotificationService } from '@/push-notification/push-notification.s
 import { UserSettingsModel } from '@/user/models/user-settings.model';
 import { ReminderSettingsModel } from '@/reminder/models/reminder-settings.model';
 import { ReminderChannel } from '@/common/enum';
+import { PUSH_QUEUE, PushJobData, PushJobName } from './push-queue.constants';
 
 @Injectable()
 export class NotificationService {
@@ -16,6 +19,7 @@ export class NotificationService {
 
     constructor(
         private readonly pushNotificationService: PushNotificationService,
+        @InjectQueue(PUSH_QUEUE) private readonly pushQueue: Queue,
         @InjectModel(NotificationModel)
         private notificationModel: typeof NotificationModel,
         @InjectModel(UserSettingsModel)
@@ -45,39 +49,57 @@ export class NotificationService {
 
         // Don't push a notification that a rollback could still undo.
         if (transaction) {
-            transaction.afterCommit(() => this.sendPush(createdNotification));
+            transaction.afterCommit(() =>
+                this.enqueuePush(createdNotification),
+            );
         } else {
-            await this.sendPush(createdNotification);
+            await this.enqueuePush(createdNotification);
         }
 
         return createdNotification;
     }
 
-    // A failed push shouldn't fail the notification it belongs to.
-    private async sendPush(notification: NotificationModel) {
+    // A failed enqueue shouldn't fail the notification it belongs to.
+    private async enqueuePush(notification: NotificationModel) {
         try {
-            if (!(await this.isPushEnabled(notification))) {
-                return;
-            }
+            const data: PushJobData = { notification_id: notification.id };
 
-            await this.pushNotificationService.sendToUser(
-                notification.user_id,
-                {
-                    title: notification.title,
-                    body: notification.body,
-                    data: {
-                        notification_id: notification.id,
-                        recurring_payment_id: notification.recurring_payment_id,
-                        type: notification.type,
-                    },
-                },
-            );
+            // One push per notification, even if this is called twice.
+            await this.pushQueue.add(PushJobName.Deliver, data, {
+                jobId: `notification-${notification.id}`,
+            });
         } catch (error) {
             this.logger.error(
-                `Error sending push for notification: ${notification.id}`,
+                `Error queueing push for notification: ${notification.id}`,
                 error,
             );
         }
+    }
+
+    // Runs in the push worker. Throws when Expo can't be reached so the
+    // job is retried.
+    async deliverPush(notificationId: string) {
+        const notification =
+            await this.notificationModel.findByPk(notificationId);
+
+        // Deleted before the worker got to it.
+        if (!notification) {
+            return;
+        }
+
+        if (!(await this.isPushEnabled(notification))) {
+            return;
+        }
+
+        await this.pushNotificationService.sendToUser(notification.user_id, {
+            title: notification.title,
+            body: notification.body,
+            data: {
+                notification_id: notification.id,
+                recurring_payment_id: notification.recurring_payment_id,
+                type: notification.type,
+            },
+        });
     }
 
     // Push needs the account-wide toggle and, for payment events, the

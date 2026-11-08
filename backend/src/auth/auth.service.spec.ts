@@ -6,7 +6,7 @@ import { TokenPayload } from 'google-auth-library';
 
 import { AuthService } from './auth.service';
 import { UserService } from '@/user/user.service';
-import { EmailService } from '@/email/email.service';
+import { EmailQueueService } from '@/email/email-queue.service';
 import { VerificationCodeModel } from '@/auth/models/verification-code.model';
 import { RefreshTokenModel } from '@/auth/models/refresh-token.model';
 
@@ -51,7 +51,7 @@ describe('AuthService', () => {
                     provide: JwtService,
                     useValue: { sign: jest.fn().mockReturnValue('access') },
                 },
-                { provide: EmailService, useValue: {} },
+                { provide: EmailQueueService, useValue: {} },
                 {
                     provide: getModelToken(VerificationCodeModel),
                     useValue: {},

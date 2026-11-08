@@ -144,7 +144,7 @@ describe('PushNotificationService', () => {
             });
         });
 
-        it('keeps going when Expo cannot be reached', async () => {
+        it('throws when Expo cannot be reached so the job retries', async () => {
             pushTokenModel.findAll.mockResolvedValue([
                 { id: 'token-a', token: TOKEN_A },
             ]);
@@ -154,7 +154,7 @@ describe('PushNotificationService', () => {
 
             await expect(
                 service.sendToUser('user-id', message),
-            ).resolves.toBeUndefined();
+            ).rejects.toThrow('Network error');
             expect(pushTicketModel.bulkCreate).not.toHaveBeenCalled();
         });
     });
