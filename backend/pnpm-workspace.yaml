@@ -1,5 +1,14 @@
 allowBuilds:
+  '@parcel/watcher': false
   '@scarf/scarf': false
   bcrypt: true
   msgpackr-extract: false
   unrs-resolver: false
+
+# Security overrides for transitive deps whose parents haven't picked up the patched versions yet.
+overrides:
+  body-parser@>=2.0.0 <2.4.0: ^2.4.0 # GHSA: DoS via trailing bytes after compressed body (via express)
+  js-yaml@>=3.0.0 <3.15.2: ^3.15.2 # merge-key CPU DoS (via jest/istanbul)
+  uuid@<11.1.1: ^11.1.1 # missing buffer bounds check (via sequelize)
+  glob@>=9.0.0 <14.0.2: ^14.0.2 # GHSA-3g3m-2fjr-6pw4 (via jest, js-beautify)
+  minimatch@>=7.0.0 <11.0.1: ^11.0.1 # GHSA-g3hv-75wg-m249 (via eslint, typescript-eslint, jest)
