@@ -33,5 +33,8 @@ when:
     event:
       - push
       - manual
+    path:
+      include:
+        - backend/**
 
 skip_clone: true
