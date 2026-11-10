@@ -1,0 +1,62 @@
+# EAS reads this file from the git root and ignores .gitignore when it exists,
+# so paths are relative to the repo root and gitignore rules are mirrored here.
+
+# Non-mobile parts of the monorepo
+/backend
+/.woodpecker
+
+# Local EAS archive inspections
+eas-archive
+
+# Dev-only files not needed to build the app
+.vscode
+/mobile/LICENSE
+/mobile/README.md
+/mobile/eslint.config.js
+/mobile/.env.example
+/mobile/.gitignore
+
+# --- mirrored from mobile/.gitignore ---
+
+# dependencies
+node_modules
+
+# Expo
+.expo
+dist
+web-build
+expo-env.d.ts
+
+# Native
+.kotlin
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+google-services.json
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+example
+
+# generated native folders
+/mobile/ios
+/mobile/android
