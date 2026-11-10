@@ -11,10 +11,31 @@ const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 // set up so the app still builds.
 const googleServicesFile = process.env.GOOGLE_SERVICES_JSON;
 
+// Set per build profile in eas.json so dev, preview and production builds get
+// their own app ID, name and URL scheme and can be installed side by side.
+// Unset (e.g. a plain `expo start`) means production.
+type AppVariant = "development" | "preview" | "production";
+const appVariant = (process.env.APP_VARIANT ?? "production") as AppVariant;
+
+const variants: Record<AppVariant, { idSuffix: string; nameSuffix: string }> = {
+  development: { idSuffix: ".dev", nameSuffix: " (Dev)" },
+  preview: { idSuffix: ".preview", nameSuffix: " (Preview)" },
+  production: { idSuffix: "", nameSuffix: "" },
+};
+const { idSuffix, nameSuffix } = variants[appVariant] ?? variants.production;
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...(config as ExpoConfig),
+  name: `${config.name}${nameSuffix}`,
+  // "mobileapp" -> "mobileapp-dev", so deep links open the right install.
+  scheme: idSuffix ? `${config.scheme}-${idSuffix.slice(1)}` : config.scheme,
+  ios: {
+    ...config.ios,
+    bundleIdentifier: `${config.ios?.bundleIdentifier}${idSuffix}`,
+  },
   android: {
     ...config.android,
+    package: `${config.android?.package}${idSuffix}`,
     ...(googleServicesFile && { googleServicesFile }),
   },
   plugins: [
