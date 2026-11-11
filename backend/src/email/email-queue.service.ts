@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { JobsOptions, Queue } from 'bullmq';
 
 import { VerificationCodeType } from '@/common/enum';
+import { EmailService } from './email.service';
 import {
     EMAIL_QUEUE,
     EmailJobArgs,
@@ -24,7 +25,10 @@ const VERIFICATION_EMAIL_METHODS = {
  */
 @Injectable()
 export class EmailQueueService {
-    constructor(@InjectQueue(EMAIL_QUEUE) private readonly emailQueue: Queue) {}
+    constructor(
+        @InjectQueue(EMAIL_QUEUE) private readonly emailQueue: Queue,
+        private readonly emailService: EmailService,
+    ) {}
 
     /** Queues a call to the `EmailService` method of the same name. */
     async enqueue<M extends EmailJobName>(
@@ -32,6 +36,16 @@ export class EmailQueueService {
         args: EmailJobArgs<M>,
         options?: JobsOptions,
     ): Promise<void> {
+        // Locally, send right away instead of going through the queue.
+        if (process.env.NODE_ENV === 'local') {
+            const emailService = this.emailService as unknown as Record<
+                EmailJobName,
+                (...args: unknown[]) => Promise<void>
+            >;
+
+            return emailService[method](...(args as unknown[]));
+        }
+
         const data: EmailJobData = { args: serializeEmailArgs(args) };
 
         await this.emailQueue.add(method, data, options);
