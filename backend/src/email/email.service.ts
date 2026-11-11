@@ -13,35 +13,16 @@ export class EmailService {
     private readonly from: string;
 
     constructor() {
-        const isProduction = process.env.NODE_ENV === 'production';
-
         this.transporter = nodemailer.createTransport({
-            host: isProduction
-                ? process.env.PROD_EMAIL_SMTP_HOST
-                : process.env.DEV_EMAIL_SMTP_HOST,
-
-            port: Number(
-                isProduction
-                    ? process.env.PROD_EMAIL_SMTP_PORT
-                    : process.env.DEV_EMAIL_SMTP_PORT,
-            ),
-
+            host: process.env.EMAIL_SMTP_HOST,
+            port: Number(process.env.EMAIL_SMTP_PORT),
             secure: true,
-
             auth: {
-                user: isProduction
-                    ? process.env.PROD_EMAIL_SMTP_USER
-                    : process.env.DEV_EMAIL_SMTP_USER,
-
-                pass: isProduction
-                    ? process.env.PROD_EMAIL_SMTP_PASSWORD
-                    : process.env.DEV_EMAIL_SMTP_PASSWORD,
+                user: process.env.EMAIL_SMTP_USER,
+                pass: process.env.EMAIL_SMTP_PASSWORD,
             },
         });
-
-        this.from = isProduction
-            ? process.env.PROD_EMAIL_SMTP_FROM!
-            : process.env.DEV_EMAIL_SMTP_FROM!;
+        this.from = process.env.EMAIL_SMTP_FROM || '';
     }
 
     async sendEmailVerificationCode(

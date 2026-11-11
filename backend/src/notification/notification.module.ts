@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { BullModule } from '@nestjs/bullmq';
+import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 
@@ -20,18 +20,29 @@ import { PushNotificationModule } from '@/push-notification/push-notification.mo
             UserSettingsModel,
             ReminderSettingsModel,
         ]),
-        BullModule.registerQueue({
-            name: PUSH_QUEUE,
-            defaultJobOptions: PUSH_QUEUE_JOB_OPTIONS,
-        }),
-        BullBoardModule.forFeature({
-            name: PUSH_QUEUE,
-            adapter: BullMQAdapter,
-        }),
+        // No Redis locally, so the queue isn't registered.
+        ...(process.env.NODE_ENV === 'local'
+            ? []
+            : [
+                  BullModule.registerQueue({
+                      name: PUSH_QUEUE,
+                      defaultJobOptions: PUSH_QUEUE_JOB_OPTIONS,
+                  }),
+                  BullBoardModule.forFeature({
+                      name: PUSH_QUEUE,
+                      adapter: BullMQAdapter,
+                  }),
+              ]),
         PushNotificationModule,
     ],
     controllers: [NotificationController],
-    providers: [NotificationService, PushProcessor],
+    providers: [
+        NotificationService,
+        // Locally jobs run inline, so stub the queue instead of starting a worker.
+        ...(process.env.NODE_ENV === 'local'
+            ? [{ provide: getQueueToken(PUSH_QUEUE), useValue: null }]
+            : [PushProcessor]),
+    ],
     exports: [NotificationService],
 })
 export class NotificationModule {}

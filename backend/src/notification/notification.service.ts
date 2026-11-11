@@ -62,6 +62,11 @@ export class NotificationService {
     // A failed enqueue shouldn't fail the notification it belongs to.
     private async enqueuePush(notification: NotificationModel) {
         try {
+            // Locally, send right away instead of going through the queue.
+            if (process.env.NODE_ENV === 'local') {
+                return await this.deliverPush(notification.id);
+            }
+
             const data: PushJobData = { notification_id: notification.id };
 
             // One push per notification, even if this is called twice.

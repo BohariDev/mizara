@@ -55,7 +55,8 @@ import { PushNotificationModule } from './push-notification/push-notification.mo
             }),
         }),
         ScheduleModule.forRoot(),
-        QueueModule,
+        // No Redis or /queues dashboard locally; jobs run inline instead.
+        ...(process.env.NODE_ENV === 'local' ? [] : [QueueModule]),
         // Static assets (e.g. preset logos) served from backend/public at /static.
         // process.cwd() is used because `nest build` compiles into dist/ while
         // public/ stays at the project root.
