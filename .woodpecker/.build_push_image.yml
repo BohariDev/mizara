@@ -32,3 +32,4 @@ when:
     path:
       include:
         - backend/**
+        - .woodpecker/*.yml
