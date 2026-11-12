@@ -21,7 +21,7 @@ steps:
         ssh "$SSH_HOST" " 
           cd \"$PROJECT_DIRECTORY\"
           docker compose down
-          wget -O docker-compose.yml '$COMPOSE_BASE_URL/$CI_COMMIT_SHA/docker-compose.yml'
+          wget -O docker-compose.yml '$COMPOSE_BASE_URL/$CI_COMMIT_SHA/backend/docker-compose.yml'
 
           if grep -q '^VERSION=' .env; then
             sed -i \"s|^VERSION=.*|VERSION=$CI_COMMIT_SHA|\" .env
