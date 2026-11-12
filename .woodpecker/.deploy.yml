@@ -6,7 +6,6 @@ steps:
     environment:
       SSH_KEY:
         from_secret: SSH_KEY
-      REGISTRY_IMAGE_TAG: boharidev/mizara-backend:$CI_COMMIT_SHA
       PROJECT_DIRECTORY: /mnt/nvme2/files/docker\ projects/service_queue/mizara/backend
       SSH_HOST: root@10.0.10.222
       COMPOSE_BASE_URL: "https://raw.githubusercontent.com/BohariDev/mizara"
