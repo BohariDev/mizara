@@ -1,0 +1,54 @@
+# Deployment step for Woodpecker CI/CD
+
+steps:
+  - name: deploy
+    image: alpine:latest
+    environment:
+      SSH_KEY:
+        from_secret: SSH_KEY
+      REGISTRY_IMAGE_TAG:
+        from_secret: REGISTRY_IMAGE_TAG
+      PROJECT_DIRECTORY: /mnt/nvme2/files/docker\ projects/service_queue/REPLACE-ME
+      SSH_HOST: root@10.0.10.115
+      DOCKER_COMPOSE_URL: https://raw.githubusercontent.com/BohariDev/mizara/refs/heads/main/backend/docker-compose.yml
+    commands:
+      - mkdir -p /var/cache/apk
+      - ln -s /var/cache/apk /etc/apk/cache
+      - apk add openssh
+      - mkdir -p /root/.ssh/
+      - echo "$SSH_KEY" | tr -d '\r' > /root/.ssh/id_rsa
+      - chmod 600 /root/.ssh/id_rsa
+      - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > /root/.ssh/config
+      - |
+        ssh "$SSH_HOST" " 
+          cd \"$PROJECT_DIRECTORY\"
+          docker compose down
+          wget -O docker-compose.yml '$DOCKER_COMPOSE_URL'
+
+          if grep -q '^VERSION=' .env; then
+            sed -i \"s|^VERSION=.*|VERSION=$CI_COMMIT_SHA|\" .env
+          else
+            echo \"VERSION=$CI_COMMIT_SHA\" >> .env
+          fi
+
+          docker compose up -d
+          docker image prune -af
+          sleep 120
+          docker compose logs
+        "
+    volumes:
+      - /var/cache/apk:/var/cache/apk
+
+when:
+  - branch: main
+    event:
+      - push
+      - manual
+    path:
+      include:
+        - backend/**
+
+depends_on:
+  - build
+
+skip_clone: true
