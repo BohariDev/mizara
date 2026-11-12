@@ -8,9 +8,9 @@ steps:
         from_secret: SSH_KEY
       REGISTRY_IMAGE_TAG:
         from_secret: REGISTRY_IMAGE_TAG
-      PROJECT_DIRECTORY: /mnt/nvme2/files/docker\ projects/service_queue/REPLACE-ME
+      PROJECT_DIRECTORY: /mnt/nvme2/files/docker\ projects/service_queue/mizara/backend
       SSH_HOST: root@10.0.10.115
-      DOCKER_COMPOSE_URL: https://raw.githubusercontent.com/BohariDev/mizara/refs/heads/main/backend/docker-compose.yml
+      DOCKER_COMPOSE_URL: "https://raw.githubusercontent.com/BohariDev/mizara/$CI_COMMIT_SHA/docker-compose.yml"
     commands:
       - mkdir -p /var/cache/apk
       - ln -s /var/cache/apk /etc/apk/cache
