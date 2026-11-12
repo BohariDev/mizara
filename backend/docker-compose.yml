@@ -34,7 +34,7 @@ services:
 
     backend:
         build: .
-        image: boharidev/mizara-backend:latest
+        image: boharidev/mizara-backend:${VERSION:-latest}
         restart: unless-stopped
         init: true
         env_file: .env

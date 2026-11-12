@@ -1,0 +1,52 @@
+# Deployment step for Woodpecker CI/CD
+
+steps:
+  - name: deploy
+    image: alpine:latest
+    environment:
+      SSH_KEY:
+        from_secret: SSH_KEY
+      PROJECT_DIRECTORY: /mnt/nvme2/files/docker\ projects/service_queue/mizara/backend
+      SSH_HOST: root@10.0.10.222
+      COMPOSE_BASE_URL: "https://raw.githubusercontent.com/BohariDev/mizara"
+    commands:
+      - mkdir -p /var/cache/apk
+      - ln -s /var/cache/apk /etc/apk/cache
+      - apk add openssh
+      - mkdir -p /root/.ssh/
+      - echo "$SSH_KEY" | tr -d '\r' > /root/.ssh/id_rsa
+      - chmod 600 /root/.ssh/id_rsa
+      - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > /root/.ssh/config
+      - |
+        ssh "$SSH_HOST" " 
+          cd \"$PROJECT_DIRECTORY\"
+          docker compose down
+          wget -O docker-compose.yml '$COMPOSE_BASE_URL/$CI_COMMIT_SHA/docker-compose.yml'
+
+          if grep -q '^VERSION=' .env; then
+            sed -i \"s|^VERSION=.*|VERSION=$CI_COMMIT_SHA|\" .env
+          else
+            echo \"VERSION=$CI_COMMIT_SHA\" >> .env
+          fi
+
+          docker compose up -d
+          docker image prune -af
+          sleep 120
+          docker compose logs
+        "
+    volumes:
+      - /var/cache/apk:/var/cache/apk
+
+when:
+  - branch: main
+    event:
+      - push
+      - manual
+    path:
+      include:
+        - backend/**
+
+depends_on:
+  - build
+
+skip_clone: true
