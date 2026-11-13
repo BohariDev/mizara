@@ -52,6 +52,8 @@ module.exports = {
     'globe-postpaid': { domain: 'globe.com.ph' },
     'smart-postpaid': { domain: 'smart.com.ph' },
     'dito-postpaid': { domain: 'dito.ph' },
+    cepalco: { domain: 'cepalco.com.ph' },
+    'cagayan-de-oro-water-district': { domain: 'cowd.gov.ph' },
 
     // Government contributions
     sss: { domain: 'sss.gov.ph' },

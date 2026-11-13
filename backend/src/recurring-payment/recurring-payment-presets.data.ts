@@ -201,6 +201,22 @@ export const RECURRING_PAYMENT_PRESETS: readonly RecurringPaymentPresetData[] =
             default_pricing_type: Pricing.Variable,
             aliases: ['Water'],
         },
+        {
+            slug: 'cepalco',
+            name: 'CEPALCO',
+            type: Type.Bills,
+            category: Category.Utilities,
+            default_pricing_type: Pricing.Variable,
+            aliases: ['Cagayan Electric', 'Electricity'],
+        },
+        {
+            slug: 'cagayan-de-oro-water-district',
+            name: 'Cagayan de Oro Water District',
+            type: Type.Bills,
+            category: Category.Utilities,
+            default_pricing_type: Pricing.Variable,
+            aliases: ['Water'],
+        },
 
         // Utilities: internet and postpaid plans are usually a fixed amount.
         {
