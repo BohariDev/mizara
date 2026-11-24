@@ -17,8 +17,10 @@ import { TransformInterceptor } from '@/common/interceptors/transform.intercepto
 import { DashboardModule } from './dashboard/dashboard.module';
 import { NotificationModule } from './notification/notification.module';
 import { PushNotificationModule } from './push-notification/push-notification.module';
+import { AppController } from './app.controller';
 
 @Module({
+    controllers: [AppController],
     providers: [
         {
             provide: APP_INTERCEPTOR,
